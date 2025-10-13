@@ -5,15 +5,15 @@
  * @param  data             -- the data the that's provided initially
  * @param  displayData      -- the data that will be used finally (which might vary based on the selection)
  *
- * @param  focus            -- a switch that indicates the current mode (focus or stacked overview)
- * @param  selectedIndex    -- a global 'variable' inside the class that keeps track of the index of the selected area
  */
 
 class HeatMap {
 
-// constructor method to initialize StackedAreaChart object
+// constructor method to initialize HeatMap object
 constructor(parentElement, data) {
     this.parentElement = parentElement;
+
+	// Categories for x and y axis
     this.cols = Array.from(new Set(data.map(d=> d.group)));
 	this.rows = Array.from(new Set(data.map(d=> d.variable)));
 	this.data = data
@@ -26,7 +26,7 @@ constructor(parentElement, data) {
 	initVis(){
 		let vis = this;
 
-		vis.margin = {top: 40, right: 40, bottom: 60, left: 40};
+		vis.margin = {top: 60, right: 40, bottom: 60, left: 40};
 
 		vis.width = document.getElementById(vis.parentElement).getBoundingClientRect().width - vis.margin.left - vis.margin.right;
 		vis.height = document.getElementById(vis.parentElement).getBoundingClientRect().height - vis.margin.top - vis.margin.bottom;
@@ -50,24 +50,24 @@ constructor(parentElement, data) {
 			.domain(vis.rows)
 			.padding(0.01);
 
-		vis.xAxis = d3.axisBottom()
+		vis.xAxis = d3.axisTop()
 			.scale(vis.x);
 
 		vis.yAxis = d3.axisLeft()
 			.scale(vis.y);
 
 		vis.svg.append("g")
-			.attr("class", "x-axis axis")
-			.attr("transform", "translate(0," + vis.height + ")");
+			.attr("class", "x-axis axis");
 
 		vis.svg.append("g")
 			.attr("class", "y-axis axis");
 
 
-		    // Set ordinal color scale
+		// Set ordinal color scale
 		vis.colorScale = d3.scaleLinear()
 			.range(["white", "#612472ff"]);
 		
+		// Add tooltip to heatmap
 		vis.tooltip = d3.select("#" + vis.parentElement)
 							.append("div")
 							.style("opacity", 0)
@@ -96,14 +96,15 @@ constructor(parentElement, data) {
 	updateVis(){
 
 		let vis = this;
-		// SET COLOUR DOMAIN
+
+		// Set color domain based on max value
 		let maxValue = d3.max(this.data,d=>{
 			return +d.value;
 		});
 
 		vis.colorScale.domain([0,maxValue]);
 
-		// Draw the layers
+		// Draw the grid for the heatmap
 		let categories = vis.svg.selectAll(".value")
 			.data(vis.displayData);
 
