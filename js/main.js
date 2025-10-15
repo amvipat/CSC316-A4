@@ -18,6 +18,12 @@ function loadData() {
 		// Create heatmap visualizations
 		heatmap = new HeatMap("heatmap", clean_data)
 		heatmap.initVis();
+        d3.select("#yearRange").on("input", function() {
+        let selectedYear = +this.value;
+        d3.select("#yearValue").text(`Up to ${selectedYear}`);
+        heatmap.yearCutoff = selectedYear;
+        heatmap.wrangleData();
+        });
 	
 	});
 

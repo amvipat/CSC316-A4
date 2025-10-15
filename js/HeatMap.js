@@ -17,6 +17,7 @@ constructor(parentElement, data) {
     this.cols = Array.from(new Set(data.map(d=> d.group)));
 	this.rows = Array.from(new Set(data.map(d=> d.variable)));
 	this.data = data
+	this.yearCutoff = 2025;
 	this.displayData = [];
 }
 
@@ -65,7 +66,7 @@ constructor(parentElement, data) {
 
 		// Set ordinal color scale
 		vis.colorScale = d3.scaleLinear()
-			.range(["white", "#612472ff"]);
+  			.range(["#f9f0f0", "#7b1a28"]);
 		
 		// Add tooltip to heatmap
 		vis.tooltip = d3.select("#" + vis.parentElement)
@@ -83,7 +84,7 @@ constructor(parentElement, data) {
 	wrangleData(){
 		let vis = this;
 
-        vis.displayData = vis.data;
+        vis.displayData = vis.data.filter(d => +d.variable <= vis.yearCutoff);
 
 		// Update the visualization
 		vis.updateVis();
@@ -132,9 +133,28 @@ constructor(parentElement, data) {
 				{				
 
    				 vis.tooltip
-					.html("Deaths:<br>" + d.value)
-					.style("left", (event.pageX+10) + "px")
-					.style("top", (event.pageY) + "px");
+					.html(`
+						<div style="
+						background: rgba(255, 255, 255, 0.95);
+						border: 1px solid #d31c34;
+						border-radius: 6px;
+						padding: 10px 12px;
+						box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+						font-family: 'Roboto', sans-serif;
+						color: #333;
+						font-size: 13px;
+						line-height: 1.4em;
+						text-align: left;
+						pointer-events: none;
+						">
+						<strong style="color:#d31c34;">${d.group} ${d.variable}</strong><br>
+						<span style="font-weight:500;">Total deaths:</span> ${d.value}<br>
+						<span style="font-weight:500;">Male:</span> ${d.Male || 0}<br>
+						<span style="font-weight:500;">Female:</span> ${d.Female || 0}<br>
+						</div>
+					`)
+					.style("left", (event.pageX + 15) + "px")
+					.style("top", (event.pageY - 35) + "px");
 					
 				});
 
