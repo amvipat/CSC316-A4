@@ -98,70 +98,68 @@ constructor(parentElement, data) {
 
 		let vis = this;
 
-		// Set color domain based on max value
-		let maxValue = d3.max(this.data,d=>{
-			return +d.value;
-		});
+		const uniqueYears = [...new Set(vis.displayData.map(d => d.variable))];
+		vis.y = d3.scaleBand()
+			.domain(uniqueYears)
+			.range([vis.height, 0])
+			.padding(0.01);
 
-		vis.colorScale.domain([0,maxValue]);
+		let maxValue = d3.max(vis.displayData, d => +d.value);
+		vis.colorScale.domain([0, maxValue || 1]);
 
-		// Draw the grid for the heatmap
 		let categories = vis.svg.selectAll(".value")
-			.data(vis.displayData);
+			.data(vis.displayData, d => d.group + "-" + d.variable);
 
 		categories.enter().append("rect")
 			.attr("class", "value")
 			.merge(categories)
-			.style("fill", d => {
-				return vis.colorScale(+d.value)
-			})
-			.attr("x", d=>{
-				return vis.x(d.group)
-			})
-			.attr("y", d=>{
-				return vis.y(d.variable)
-			})
+			.transition()
+			.duration(600)
+			.attr("x", d => vis.x(d.group))
+			.attr("y", d => vis.y(d.variable))
 			.attr("width", vis.x.bandwidth())
 			.attr("height", vis.y.bandwidth())
-			.on("mouseover",(event, d)=>{
-				vis.tooltip.style("opacity", 1);
-			})
-			.on("mouseleave", (d)=>{
-				vis.tooltip.style("opacity", 0);
-			})
-			.on("mousemove", (event,d)=>
-				{				
-
-   				 vis.tooltip
-					.html(`
-						<div style="
-						background: rgba(255, 255, 255, 0.95);
-						border: 1px solid #d31c34;
-						border-radius: 6px;
-						padding: 10px 12px;
-						box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-						font-family: 'Roboto', sans-serif;
-						color: #333;
-						font-size: 13px;
-						line-height: 1.4em;
-						text-align: left;
-						pointer-events: none;
-						">
-						<strong style="color:#d31c34;">${d.group} ${d.variable}</strong><br>
-						<span style="font-weight:500;">Total deaths:</span> ${d.value}<br>
-						<span style="font-weight:500;">Male:</span> ${d.Male || 0}<br>
-						<span style="font-weight:500;">Female:</span> ${d.Female || 0}<br>
-						</div>
-					`)
-					.style("left", (event.pageX + 15) + "px")
-					.style("top", (event.pageY - 35) + "px");
-					
-				});
+			.style("fill", d => vis.colorScale(+d.value));
 
 		categories.exit().remove();
 
-		// Call axis functions with the new domain
-		vis.svg.select(".x-axis").call(vis.xAxis);
+		vis.svg.selectAll(".value")
+			.on("mouseover", (event, d) => {
+			vis.tooltip.transition().duration(150).style("opacity", 1);
+			vis.tooltip
+				.html(`
+				<div style="
+					background: rgba(255, 255, 255, 0.95);
+					border: 1px solid #d31c34;
+					border-radius: 6px;
+					padding: 10px 12px;
+					box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+					font-family: 'Roboto', sans-serif;
+					color: #333;
+					font-size: 13px;
+					line-height: 1.4em;
+					text-align: left;
+					pointer-events: none;">
+					<strong style="color:#d31c34;">${d.group} ${d.variable}</strong><br>
+					<span style="font-weight:500;">Total deaths:</span> ${d.value}<br>
+					<span style="font-weight:500;">Male:</span> ${d.Male || 0}<br>
+					<span style="font-weight:500;">Female:</span> ${d.Female || 0}
+				</div>
+				`)
+				.style("left", (event.pageX + 15) + "px")
+				.style("top", (event.pageY - 35) + "px");
+			})
+			.on("mouseleave", () => {
+			vis.tooltip.transition().duration(300).style("opacity", 0);
+			});
+
+		vis.xAxis = d3.axisTop().scale(vis.x);
+		vis.yAxis = d3.axisLeft().scale(vis.y);
+
+		vis.svg.select(".x-axis")
+			.attr("transform", `translate(0,${vis.y.range()[1]})`)
+			.call(vis.xAxis);
+
 		vis.svg.select(".y-axis").call(vis.yAxis);
 	}
 }
